@@ -121,5 +121,49 @@
   }
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  html {
+    color-scheme: light dark;
+  }
+}
+
+/* Smooth theme transitions */
+@layer utilities {
+  .transition-theme {
+    @apply transition-colors duration-300;
+  }
+
+  /* Enhanced dark mode styling */
+  .dark {
+    color-scheme: dark;
+  }
+
+  .light {
+    color-scheme: light;
+  }
+
+  /* Glassmorphism effect for cards */
+  .glass {
+    @apply backdrop-blur-md bg-background/80 border border-border/20;
+  }
+
+  /* Improved scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--color-primary));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--color-primary) / 0.8);
   }
 }

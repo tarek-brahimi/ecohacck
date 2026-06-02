@@ -4,8 +4,9 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/components/theme-provider';
 import Link from 'next/link';
-import { Sparkles, LayoutGrid, MapPin, MessageSquare, Trophy, User, LogOut, Menu } from 'lucide-react';
+import { Sparkles, LayoutGrid, MapPin, MessageSquare, Trophy, User, LogOut, Menu, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 
 const NAV_ITEMS = [
@@ -22,6 +23,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const { user, isLoading, logout, isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -95,6 +97,19 @@ export default function DashboardLayout({
             </Link>
           ))}
         </nav>
+
+        {/* Theme Toggle */}
+        <div className="mb-4 pt-4 border-t border-border/50">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-background"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </Button>
+        </div>
 
         {/* Logout Button */}
         <Button
