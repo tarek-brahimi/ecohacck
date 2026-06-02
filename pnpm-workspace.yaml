@@ -1,0 +1,5 @@
+allowBuilds:
+  sharp: false
+minimumReleaseAgeExclude:
+  - '@ai-sdk/gateway@3.0.123'
+  - ai@6.0.195
