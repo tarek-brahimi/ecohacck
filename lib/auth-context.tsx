@@ -18,9 +18,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Check if user is logged in on mount (from localStorage)
   useEffect(() => {
+    setIsMounted(true);
     const storedUserId = localStorage.getItem('wakti_user_id');
     if (storedUserId) {
       const currentUser = getMockCurrentUser(storedUserId);
@@ -73,11 +75,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        isLoading,
+        isLoading: !isMounted || isLoading,
         login,
         signup,
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: isMounted ? !!user : false,
       }}
     >
       {children}

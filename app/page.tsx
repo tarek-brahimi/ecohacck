@@ -2,20 +2,25 @@
 
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Sparkles, MapPin, Users, Zap } from 'lucide-react';
 
 export default function LandingPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted && !isLoading && isAuthenticated) {
       router.push('/dashboard/feed');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isLoading, isMounted, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
