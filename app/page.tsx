@@ -1,37 +1,129 @@
-export default function Page() {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-black px-6 text-neutral-400">
-      <div className="flex w-full max-w-md flex-col items-start gap-8">
-        <svg
-          fill="currentColor"
-          viewBox="0 0 147 70"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-          className="size-10 text-white"
-        >
-          <path d="M56 50.2031V14H70V60.1562C70 65.5928 65.5928 70 60.1562 70C57.5605 70 54.9982 68.9992 53.1562 67.1573L0 14H19.7969L56 50.2031Z" />
-          <path d="M147 56H133V23.9531L100.953 56H133V70H96.6875C85.8144 70 77 61.1856 77 50.3125V14H91V46.1562L123.156 14H91V0H127.312C138.186 0 147 8.81439 147 19.6875V56Z" />
-        </svg>
+'use client';
 
-        <div className="space-y-3">
-          <h1 className="text-balance text-2xl font-semibold tracking-tight text-white">
-            To get started, describe what you want to build.
-          </h1>
-          <p className="text-pretty text-sm leading-relaxed text-neutral-500">
-            This is the default page for a fresh v0 project. Open the prompt and
-            tell v0 what to create, or browse the{' '}
-            <a
-              href="https://v0.app/templates"
-              target="_blank"
-              rel="noreferrer"
-              className="text-neutral-300 underline underline-offset-4 hover:text-white"
-            >
-              Community
-            </a>{' '}
-            for inspiration.
-          </p>
+import { useAuth } from '@/lib/auth-context';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Sparkles, MapPin, Users, Zap } from 'lucide-react';
+
+export default function LandingPage() {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard/feed');
+    }
+  }, [isAuthenticated, router]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-border/40 backdrop-blur-sm bg-background/95">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-bold text-foreground">Wakti</span>
+          </div>
+          <nav className="hidden md:flex items-center gap-8">
+            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition">Features</a>
+            <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition">How It Works</a>
+          </nav>
+          <div className="flex items-center gap-3">
+            <Link href="/login">
+              <Button variant="ghost" size="sm">Sign In</Button>
+            </Link>
+            <Link href="/signup">
+              <Button size="sm">Get Started</Button>
+            </Link>
+          </div>
         </div>
-      </div>
-    </main>
-  )
+      </header>
+
+      {/* Hero Section */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
+        <div className="text-center space-y-8">
+          <h1 className="text-5xl md:text-6xl font-bold text-foreground leading-tight text-balance">
+            Discover Youth <span className="text-primary">Activities</span> Near You
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
+            Find exciting sports, arts, tech, and social activities. Connect with peers, earn points, and level up your skills.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup">
+              <Button size="lg" className="w-full sm:w-auto">Start Exploring</Button>
+            </Link>
+            <Link href="#features">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">Learn More</Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Hero Visual */}
+        <div className="mt-20 relative h-96 rounded-xl overflow-hidden border border-border bg-muted">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 flex items-center justify-center">
+            <div className="text-center">
+              <Zap className="w-24 h-24 text-primary/30 mx-auto mb-4" />
+              <p className="text-muted-foreground">Activity showcase coming soon</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="bg-card border-y border-border">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <h2 className="text-4xl font-bold text-foreground text-center mb-16">Why Choose Wakti?</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: MapPin,
+                title: 'Find Activities Near You',
+                description: 'Browse activities by location, category, and difficulty level on an interactive map.',
+              },
+              {
+                icon: Users,
+                title: 'Connect With Peers',
+                description: 'Meet like-minded youth who share your interests and join a vibrant community.',
+              },
+              {
+                icon: Zap,
+                title: 'Earn Points & Compete',
+                description: 'Gain points for each activity, climb the leaderboard, and unlock achievements.',
+              },
+            ].map((feature, idx) => (
+              <div key={idx} className="p-8 rounded-lg border border-border bg-background hover:shadow-lg transition">
+                <feature.icon className="w-8 h-8 text-primary mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section id="how-it-works" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="bg-primary rounded-2xl p-12 text-center space-y-8">
+          <h2 className="text-4xl font-bold text-primary-foreground">Ready to Start?</h2>
+          <p className="text-lg text-primary-foreground/90 max-w-2xl mx-auto">
+            Join thousands of young people discovering new passions and making meaningful connections.
+          </p>
+          <Link href="/signup">
+            <Button size="lg" variant="secondary" className="w-full sm:w-auto">Create Your Account</Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-background/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm text-muted-foreground">
+          <p>&copy; 2024 Wakti. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+  );
 }
