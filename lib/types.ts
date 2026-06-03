@@ -14,6 +14,12 @@ export interface User {
   createdAt: Date;
 }
 
+export interface UserProfile extends User {
+  bio?: string | null;
+  avatar?: string | null;
+  joinedActivities: string[];
+}
+
 export interface Activity {
   id: string;
   title: string;
@@ -43,6 +49,20 @@ export interface LeaderboardEntry {
   points: number;
   rank: number;
   activities: number;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface ChatMessage {

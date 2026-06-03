@@ -1,0 +1,10 @@
+import { NextResponse } from 'next/server';
+
+import { getLeaderboard } from '@/lib/data-access';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
+  const leaderboard = await getLeaderboard();
+  return NextResponse.json({ success: true, data: leaderboard });
+}

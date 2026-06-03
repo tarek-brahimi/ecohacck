@@ -1,29 +1,40 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { mockActivities } from '@/lib/mock-data';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Trash2, Edit, Plus, Search } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Trash2, Edit, Plus, Search } from "lucide-react";
+import { Activity } from "@/lib/types";
+import { apiRequest, parseActivities } from "@/lib/api-client";
 
 export default function AdminActivitiesPage() {
-  const [activities, setActivities] = useState(mockActivities);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-  const filteredActivities = Object.values(activities).filter(activity => {
-    const matchesSearch = activity.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || activity.category === selectedCategory;
+  useEffect(() => {
+    apiRequest<Activity[]>("/api/activities")
+      .then((data) => setActivities(parseActivities(data)))
+      .catch(() => setActivities([]));
+  }, []);
+
+  const filteredActivities = activities.filter((activity) => {
+    const matchesSearch = activity.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      !selectedCategory || activity.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const categories = [...new Set(Object.values(activities).map(a => a.category))];
+  const categories = [...new Set(activities.map((a) => a.category))];
 
-  const handleDelete = (id: string) => {
-    const newActivities = { ...activities };
-    delete newActivities[id];
-    setActivities(newActivities);
+  const handleDelete = async (id: string) => {
+    await apiRequest(`/api/activities/${id}`, { method: "DELETE" });
+    setActivities((currentActivities) =>
+      currentActivities.filter((activity) => activity.id !== id),
+    );
   };
 
   return (
@@ -33,8 +44,12 @@ export default function AdminActivitiesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Activities Management</h1>
-              <p className="text-muted-foreground mt-1">Create, edit, and manage activities</p>
+              <h1 className="text-3xl font-bold text-foreground">
+                Activities Management
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Create, edit, and manage activities
+              </p>
             </div>
             <Button className="gap-2">
               <Plus className="w-5 h-5" />
@@ -67,7 +82,7 @@ export default function AdminActivitiesPage() {
               className="px-3 py-1 rounded-lg border border-border bg-background text-foreground text-sm cursor-pointer"
             >
               <option value="">All Categories</option>
-              {categories.map(cat => (
+              {categories.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat.charAt(0).toUpperCase() + cat.slice(1)}
                 </option>
@@ -82,31 +97,59 @@ export default function AdminActivitiesPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Title</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Location</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Difficulty</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Enrollments</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Title
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Location
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Difficulty
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Enrollments
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredActivities.length > 0 ? (
-                  filteredActivities.map(activity => (
-                    <tr key={activity.id} className="hover:bg-muted/50 transition">
-                      <td className="px-6 py-4 text-sm font-medium text-foreground">{activity.title}</td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground capitalize">{activity.category}</td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground truncate">{activity.location}</td>
+                  filteredActivities.map((activity) => (
+                    <tr
+                      key={activity.id}
+                      className="hover:bg-muted/50 transition"
+                    >
+                      <td className="px-6 py-4 text-sm font-medium text-foreground">
+                        {activity.title}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground capitalize">
+                        {activity.category}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground truncate">
+                        {activity.location}
+                      </td>
                       <td className="px-6 py-4 text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          activity.difficultyLevel === 'easy' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                          activity.difficultyLevel === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                          'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                        }`}>
-                          {activity.difficultyLevel.charAt(0).toUpperCase() + activity.difficultyLevel.slice(1)}
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            activity.difficultyLevel === "easy"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              : activity.difficultyLevel === "medium"
+                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                          }`}
+                        >
+                          {activity.difficultyLevel.charAt(0).toUpperCase() +
+                            activity.difficultyLevel.slice(1)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-foreground">{activity.enrollmentCount}</td>
+                      <td className="px-6 py-4 text-sm text-foreground">
+                        {activity.enrollmentCount}
+                      </td>
                       <td className="px-6 py-4 text-sm space-x-2 flex">
                         <Button
                           variant="ghost"
@@ -130,7 +173,10 @@ export default function AdminActivitiesPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-8 text-center text-muted-foreground"
+                    >
                       No activities found matching your filters.
                     </td>
                   </tr>
@@ -143,8 +189,15 @@ export default function AdminActivitiesPage() {
         {/* Summary */}
         <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
           <p className="text-sm text-muted-foreground">
-            Showing <span className="font-semibold text-foreground">{filteredActivities.length}</span> of{' '}
-            <span className="font-semibold text-foreground">{Object.keys(activities).length}</span> activities
+            Showing{" "}
+            <span className="font-semibold text-foreground">
+              {filteredActivities.length}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-foreground">
+              {activities.length}
+            </span>{" "}
+            activities
           </p>
         </div>
       </div>

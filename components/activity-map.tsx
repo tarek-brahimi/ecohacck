@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Activity } from '@/src/data/models';
-import { MapPin, Navigation, Zap } from 'lucide-react';
+import { useState } from "react";
+import { Activity } from "@/lib/types";
+import { MapPin, Navigation, Zap } from "lucide-react";
 
 interface ActivityMapProps {
   activities: Activity[];
@@ -27,7 +27,7 @@ export function ActivityMap({
       minLng: Math.min(acc.minLng, activity.longitude),
       maxLng: Math.max(acc.maxLng, activity.longitude),
     }),
-    { minLat: 90, maxLat: -90, minLng: 180, maxLng: -180 }
+    { minLat: 90, maxLat: -90, minLng: 180, maxLng: -180 },
   );
 
   const centerLat = (bounds.minLat + bounds.maxLat) / 2;
@@ -55,33 +55,47 @@ export function ActivityMap({
   // Get category color
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      sports: '#ff6b6b',
-      arts: '#ee5a6f',
-      tech: '#748ffc',
-      social: '#ffd43b',
-      outdoor: '#51cf66',
-      music: '#da77f2',
-      other: '#74c0fc',
+      sports: "#ff6b6b",
+      arts: "#ee5a6f",
+      tech: "#748ffc",
+      social: "#ffd43b",
+      outdoor: "#51cf66",
+      music: "#da77f2",
+      other: "#74c0fc",
     };
-    return colors[category] || '#748ffc';
+    return colors[category] || "#748ffc";
   };
 
   return (
     <div className="w-full h-full flex flex-col gap-4">
       {/* Map Container */}
-      <div className="flex-1 rounded-xl border border-border/50 bg-gradient-to-br from-background via-card to-background overflow-hidden shadow-lg">
+      <div className="flex-1 rounded-xl border border-border/50 bg-linear-to-br from-background via-card to-background overflow-hidden shadow-lg">
         <svg
           width="100%"
           height="100%"
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-full"
-          style={{ minHeight: '500px' }}
+          style={{ minHeight: "500px" }}
         >
           {/* Gradient Defs */}
           <defs>
-            <linearGradient id="mapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="var(--color-muted)" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="var(--color-muted)" stopOpacity="0.1" />
+            <linearGradient
+              id="mapGradient"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop
+                offset="0%"
+                stopColor="var(--color-muted)"
+                stopOpacity="0.3"
+              />
+              <stop
+                offset="100%"
+                stopColor="var(--color-muted)"
+                stopOpacity="0.1"
+              />
             </linearGradient>
 
             <filter id="blur">
@@ -173,7 +187,7 @@ export function ActivityMap({
                 onClick={() => onSelectActivity(activity.id)}
                 onMouseEnter={() => setHoveredActivity(activity.id)}
                 onMouseLeave={() => setHoveredActivity(null)}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: "pointer" }}
               >
                 {/* Glow effect for selected */}
                 {(isSelected || isHovered) && (
@@ -187,7 +201,7 @@ export function ActivityMap({
                       strokeWidth="2"
                       opacity={isSelected ? 0.6 : 0.4}
                       style={{
-                        animation: isSelected ? 'pulse 2s infinite' : 'none',
+                        animation: isSelected ? "pulse 2s infinite" : "none",
                       }}
                     />
                     <circle
@@ -210,7 +224,7 @@ export function ActivityMap({
                   fill={categoryColor}
                   opacity={isSelected ? 1 : isHovered ? 0.9 : 0.8}
                   className="transition-all"
-                  filter={isSelected ? 'url(#glow)' : undefined}
+                  filter={isSelected ? "url(#glow)" : undefined}
                 />
 
                 {/* Enrollment indicator */}
@@ -267,22 +281,54 @@ export function ActivityMap({
 
           {/* Compass */}
           <g transform={`translate(${width - 60}, ${padding + 30})`}>
-            <circle cx="0" cy="0" r="20" fill="var(--color-card)" stroke="var(--color-border)" strokeWidth="1" />
-            <text x="0" y="-3" fontSize="14" fontWeight="bold" fill="var(--color-primary)" textAnchor="middle">
+            <circle
+              cx="0"
+              cy="0"
+              r="20"
+              fill="var(--color-card)"
+              stroke="var(--color-border)"
+              strokeWidth="1"
+            />
+            <text
+              x="0"
+              y="-3"
+              fontSize="14"
+              fontWeight="bold"
+              fill="var(--color-primary)"
+              textAnchor="middle"
+            >
               N
             </text>
-            <line x1="0" y1="5" x2="0" y2="15" stroke="var(--color-primary)" strokeWidth="2" />
+            <line
+              x1="0"
+              y1="5"
+              x2="0"
+              y2="15"
+              stroke="var(--color-primary)"
+              strokeWidth="2"
+            />
           </g>
 
           {/* Legend */}
           <g transform={`translate(${padding}, ${height - padding + 20})`}>
-            <text x="0" y="0" fontSize="12" fontWeight="bold" fill="var(--color-foreground)">
+            <text
+              x="0"
+              y="0"
+              fontSize="12"
+              fontWeight="bold"
+              fill="var(--color-foreground)"
+            >
               Legend:
             </text>
-            {['sports', 'arts', 'tech', 'social'].map((category, i) => (
+            {["sports", "arts", "tech", "social"].map((category, i) => (
               <g key={category} transform={`translate(${i * 140}, 15)`}>
                 <circle cx="0" cy="0" r="4" fill={getCategoryColor(category)} />
-                <text x="12" y="4" fontSize="11" fill="var(--color-muted-foreground)">
+                <text
+                  x="12"
+                  y="4"
+                  fontSize="11"
+                  fill="var(--color-muted-foreground)"
+                >
                   {category.charAt(0).toUpperCase() + category.slice(1)}
                 </text>
               </g>
@@ -303,12 +349,15 @@ export function ActivityMap({
             <span>{enrolledActivities.size} Enrolled</span>
           </div>
         </div>
-        <span className="text-xs opacity-60">Click on markers to view details</span>
+        <span className="text-xs opacity-60">
+          Click on markers to view details
+        </span>
       </div>
 
       <style jsx>{`
         @keyframes pulse {
-          0%, 100% {
+          0%,
+          100% {
             opacity: 0.8;
             r: 28;
           }
