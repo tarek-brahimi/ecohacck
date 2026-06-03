@@ -111,11 +111,11 @@ export function ActivityMapLeaflet({
 
   return (
     <div className="w-full h-full flex flex-col gap-4">
-      <div className="rounded-xl border border-border/60 overflow-hidden shadow-lg">
+      <div className="relative z-0 overflow-hidden rounded-lg border border-white/10 bg-black shadow-2xl shadow-black/40">
         <MapContainer
           center={points[0] || DEFAULT_CENTER}
           zoom={6}
-          className="activity-map-container h-[500px] w-full"
+          className="activity-map-container h-[min(62vh,560px)] min-h-[420px] w-full"
           zoomControl={false}
           scrollWheelZoom
           dragging
@@ -124,7 +124,7 @@ export function ActivityMapLeaflet({
         >
           <ZoomControl position="bottomright" />
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; CARTO'
           />
 
@@ -164,7 +164,7 @@ export function ActivityMapLeaflet({
                   }}
                 >
                   <Popup>
-                    <div className="space-y-1">
+                    <div className="space-y-1 text-zinc-100">
                       <p className="font-semibold">{activity.title}</p>
                       <p className="text-xs opacity-80">{activity.location}</p>
                       <p className="text-xs opacity-80 capitalize">
@@ -179,10 +179,10 @@ export function ActivityMapLeaflet({
         </MapContainer>
       </div>
 
-      <div className="flex justify-between items-center text-sm text-muted-foreground px-2">
-        <div className="flex gap-6">
+      <div className="flex flex-col gap-3 px-1 text-sm text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-5">
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-primary" />
+            <Zap className="w-4 h-4 text-emerald-300" />
             <span>{mappedActivities.length} activities</span>
           </div>
           <div className="flex items-center gap-2">
@@ -191,7 +191,7 @@ export function ActivityMapLeaflet({
           </div>
         </div>
         <span className="text-xs opacity-70">
-          Drag to move • Scroll to zoom
+          Drag to move - scroll to zoom
         </span>
       </div>
     </div>
