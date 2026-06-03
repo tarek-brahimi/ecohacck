@@ -348,23 +348,6 @@ input[type="checkbox"]:checked {
 }
 
 /* ===== CARD HOVER ANIMATION (Lift & Shadow) ===== */
-[role="article"],
-.card {
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-[role="article"]:hover,
-.card:hover,
-.card-hover:hover {
-  transform: translateY(-12px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-}
-
-.card-hover {
-  position: relative;
-  overflow: hidden;
-}
-
 /* ===== TOGGLE ANIMATION (Bounce & Rotate) ===== */
 input[type="checkbox"][role="switch"],
 [role="switch"] {

@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/theme-provider';
+import { BrandLogo } from '@/components/brand-logo';
 import Link from 'next/link';
-import { Sparkles, LayoutGrid, MapPin, MessageSquare, Trophy, User, LogOut, Menu, Moon, Sun, Shield } from 'lucide-react';
+import { LayoutGrid, MapPin, MessageSquare, Trophy, User, LogOut, Menu, Moon, Sun, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { fadeInUp } from '@/components/ui/motion';
 
@@ -73,10 +74,7 @@ export default function DashboardLayout({
       >
         {/* Logo */}
         <Link href="/dashboard/feed" className="flex items-center gap-2 mb-8 hover:opacity-80 transition">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold text-foreground">Wakti</span>
+          <BrandLogo />
         </Link>
 
         {/* User Info */}

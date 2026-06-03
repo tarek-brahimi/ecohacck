@@ -22,7 +22,7 @@ export default function ChatPage() {
     {
       id: "1",
       role: "assistant",
-      content: `Hello! I'm your Wakti activity assistant. Tell me what kind of activities you're interested in, and I'll recommend the perfect ones for you! You can ask me about sports, arts, tech, music, outdoor activities, social events, or anything else.`,
+      content: `Hello! I'm your shabeb activity assistant. Tell me what kind of activities you're interested in, and I'll recommend the perfect ones for you! You can ask me about sports, arts, tech, music, outdoor activities, social events, or anything else.`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -66,7 +66,7 @@ export default function ChatPage() {
         content: `${result.message}\n\n${result.recommendations
           .map(
             (activity) =>
-              `• ${parseActivity(activity).title} - ${activity.category} at ${activity.location}`,
+              `- ${parseActivity(activity).title} - ${activity.category} at ${activity.location}`,
           )
           .join("\n")}`,
       };

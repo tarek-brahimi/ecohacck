@@ -7,8 +7,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { BrandLogo } from '@/components/brand-logo';
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
 import { fadeInUp, pageTransition } from '@/components/ui/motion';
 
 export default function LoginPage() {
@@ -59,10 +59,7 @@ export default function LoginPage() {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">Wakti</span>
+            <BrandLogo imageClassName="size-8" />
           </Link>
         </div>
       </motion.header>
@@ -80,7 +77,7 @@ export default function LoginPage() {
             <div className="p-8 space-y-6">
             <div className="space-y-2 text-center">
               <h1 className="text-2xl font-bold text-foreground">Welcome Back</h1>
-              <p className="text-muted-foreground">Sign in to your Wakti account</p>
+              <p className="text-muted-foreground">Sign in to your shabeb account</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">

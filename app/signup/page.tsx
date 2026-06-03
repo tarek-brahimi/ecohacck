@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { BrandLogo } from '@/components/brand-logo';
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
 import { fadeInUp, pageTransition } from '@/components/ui/motion';
 
 type AgeGroup = 'teen' | 'young-adult';
@@ -81,10 +81,7 @@ export default function SignupPage() {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">Wakti</span>
+            <BrandLogo imageClassName="size-8" />
           </Link>
         </div>
       </motion.header>
@@ -102,7 +99,7 @@ export default function SignupPage() {
             <div className="p-8 space-y-6">
             <div className="space-y-2 text-center">
               <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
-              <p className="text-muted-foreground">Join Wakti and discover activities</p>
+              <p className="text-muted-foreground">Join shabeb and discover activities</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">

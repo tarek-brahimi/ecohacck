@@ -5,8 +5,9 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { BrandLogo } from '@/components/brand-logo';
 import Link from 'next/link';
-import { Sparkles, LayoutDashboard, Users, ActivitySquare, LogOut, Menu } from 'lucide-react';
+import { LayoutDashboard, Users, ActivitySquare, LogOut, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { fadeInUp } from '@/components/ui/motion';
 
@@ -105,10 +106,7 @@ export default function AdminLayout({
       >
         {/* Logo */}
         <Link href="/admin" className="flex items-center gap-2 mb-8 hover:opacity-80 transition">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold text-foreground">Wakti</span>
+          <BrandLogo />
         </Link>
 
         {/* Admin Badge */}

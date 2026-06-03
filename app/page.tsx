@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ActivityMap } from '@/components/activity-map';
+import { BrandLogo } from '@/components/brand-logo';
 import Link from 'next/link';
 import { MapPin, Users, Zap } from 'lucide-react';
 import { fadeInUp, pageTransition } from '@/components/ui/motion';
@@ -68,9 +69,7 @@ export default function LandingPage() {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-           
-            <span className="text-xl font-bold text-foreground">shabeb</span>
-            
+            <BrandLogo />
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition">Features</a>
@@ -139,7 +138,7 @@ export default function LandingPage() {
       {/* Features Section */}
       <section id="features" className="bg-card border-y border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <h2 className="text-4xl font-bold text-foreground text-center mb-16">Why Choose Wakti?</h2>
+          <h2 className="text-4xl font-bold text-foreground text-center mb-16">Why Choose shabeb?</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
