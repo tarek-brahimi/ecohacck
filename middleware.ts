@@ -25,11 +25,7 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const session = await verifySession(token);
-    if (pathname.startsWith('/admin') && session.role !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard/feed', request.url));
-    }
-
+    await verifySession(token);
     return NextResponse.next();
   } catch {
     if (pathname.startsWith('/api/')) {
