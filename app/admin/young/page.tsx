@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, CalendarPlus, Trash2 } from "lucide-react";
+import { motion } from 'framer-motion';
+import { buttonMotion, cardVariants } from '@/components/ui/motion';
 
 export default function AdminYoungPage() {
   return (
@@ -19,7 +21,8 @@ export default function AdminYoungPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Card className="lg:col-span-2 p-6 space-y-4">
+          <motion.div className="lg:col-span-2">
+            <motion.div variants={cardVariants} initial="hidden" whileInView="visible" whileHover="hover" className="p-6 space-y-4 bg-card rounded-lg">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-foreground">Submitted Events (Static)</h2>
               <div className="flex items-center gap-2">
@@ -50,17 +53,22 @@ export default function AdminYoungPage() {
                   <Button variant="destructive" size="sm"><Trash2 className="w-4 h-4" /></Button>
                 </div>
               </div>
-            </div>
-          </Card>
+              </div>
+            </motion.div>
+          </motion.div>
 
-          <Card className="p-6 space-y-4">
-            <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
-            <div className="space-y-2">
-              <Button className="w-full" variant="outline">
-                <Users className="w-4 h-4 mr-2" /> Manage Youths (placeholder)
-              </Button>
-            </div>
-          </Card>
+          <motion.div className="p-6 space-y-4">
+            <motion.div variants={cardVariants} initial="hidden" whileHover="hover" className="p-6 rounded-lg bg-card">
+              <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
+              <div className="space-y-2">
+                <motion.div whileHover={buttonMotion.whileHover} whileTap={buttonMotion.whileTap} transition={{ type: 'spring', stiffness: 600, damping: 22 } as any}>
+                  <Button className="w-full" variant="outline">
+                    <Users className="w-4 h-4 mr-2" /> Manage Youths (placeholder)
+                  </Button>
+                </motion.div>
+              </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </div>
