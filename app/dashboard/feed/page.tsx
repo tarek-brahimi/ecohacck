@@ -4,12 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { ActivityCard } from "@/components/activity-card";
 import { ActivityMap } from "@/components/activity-map";
+import { RecommendationCard } from "@/components/recommendation-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Activity } from "@/lib/types";
+import type { NearbyActivity } from "@/lib/recommender-backend";
 import { apiRequest, parseActivities } from "@/lib/api-client";
-import { Search, Filter, X } from "lucide-react";
+import { Search, Filter, X, Sparkles } from "lucide-react";
+
+// Fallback location (Algiers city center) when the browser can't/won't share
+// the user's position. Matches the backend seed data region.
+const FALLBACK_LOCATION = { lat: 36.76, lng: 3.05 };
 
 export default function FeedPage() {
   const { user } = useAuth();
@@ -25,6 +31,8 @@ export default function FeedPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
+  const [recommendations, setRecommendations] = useState<NearbyActivity[]>([]);
+  const [recsLoading, setRecsLoading] = useState(true);
 
   useEffect(() => {
     let isActive = true;
@@ -66,6 +74,44 @@ export default function FeedPage() {
       isActive = false;
     };
   }, [user?.role]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadRecommendations = async (lat: number, lng: number) => {
+      try {
+        const { recommendations: recs } = await apiRequest<{
+          recommendations: NearbyActivity[];
+        }>(`/api/recommendations?lat=${lat}&lng=${lng}`);
+        if (isActive) {
+          setRecommendations(recs || []);
+        }
+      } catch {
+        if (isActive) {
+          setRecommendations([]);
+        }
+      } finally {
+        if (isActive) {
+          setRecsLoading(false);
+        }
+      }
+    };
+
+    if (typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) =>
+          loadRecommendations(position.coords.latitude, position.coords.longitude),
+        () => loadRecommendations(FALLBACK_LOCATION.lat, FALLBACK_LOCATION.lng),
+        { timeout: 8000 },
+      );
+    } else {
+      loadRecommendations(FALLBACK_LOCATION.lat, FALLBACK_LOCATION.lng);
+    }
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const categories = [
     "sports",
@@ -263,6 +309,38 @@ export default function FeedPage() {
             )}
           </Card>
         ) : null}
+
+        <Card className="p-6 space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">
+                  Recommended near you
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Activities close to you, ranked by proximity and freshness.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {recsLoading ? (
+            <p className="text-sm text-muted-foreground">
+              Loading recommendations...
+            </p>
+          ) : recommendations.length ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recommendations.slice(0, 6).map((rec) => (
+                <RecommendationCard key={rec.id} activity={rec} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No nearby recommendations yet.
+            </p>
+          )}
+        </Card>
 
         <Card className="p-6 space-y-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
