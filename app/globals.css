@@ -365,25 +365,6 @@ input[type="checkbox"]:checked {
   overflow: hidden;
 }
 
-.card-hover::before {
-  content: '';
-  position: absolute;
-  left: -20%;
-  top: 100%;
-  width: 140%;
-  height: 120%;
-  background: radial-gradient(circle at 50% 20%, rgba(252, 211, 77, 0.3), transparent 50%);
-  opacity: 0;
-  transform: translateY(0) scale(0.8);
-  transition: opacity 0.35s ease, transform 0.35s ease;
-  pointer-events: none;
-}
-
-.card-hover:hover::before {
-  opacity: 1;
-  transform: translateY(-30px) scale(1.05);
-}
-
 /* ===== TOGGLE ANIMATION (Bounce & Rotate) ===== */
 input[type="checkbox"][role="switch"],
 [role="switch"] {
