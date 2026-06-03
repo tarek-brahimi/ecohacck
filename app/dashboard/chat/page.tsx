@@ -1,23 +1,26 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Send, Sparkles } from "lucide-react";
-import { apiRequest, parseActivity } from "@/lib/api-client";
-import { Activity } from "@/lib/types";
+import { apiRequest } from "@/lib/api-client";
+
+interface Source {
+  source_type: string;
+  source_id: string;
+  snippet: string;
+}
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  sources?: Source[];
 }
 
-// Mock activity recommendation logic
 export default function ChatPage() {
-  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -50,25 +53,29 @@ export default function ChatPage() {
 
     try {
       const result = await apiRequest<{
-        message: string;
-        recommendations: Activity[];
+        answer: string;
+        sources: Source[];
       }>("/api/chat", {
         method: "POST",
-        body: JSON.stringify({
-          message: input,
-          interests: user?.interests || [],
-        }),
+        body: JSON.stringify({ message: input }),
       });
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `${result.message}\n\n${result.recommendations
-          .map(
-            (activity) =>
-              `- ${parseActivity(activity).title} - ${activity.category} at ${activity.location}`,
-          )
-          .join("\n")}`,
+        content: result.answer || "I don't have an answer for that.",
+        sources: result.sources,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content:
+          error instanceof Error && error.message
+            ? error.message
+            : "Sorry, the AI assistant is unavailable right now. Please try again later.",
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -127,6 +134,22 @@ export default function ChatPage() {
                 >
                   {message.content}
                 </p>
+
+                {message.sources && message.sources.length > 0 && (
+                  <div className="mt-3 border-t border-border/60 pt-2 space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Sources
+                    </p>
+                    {message.sources.map((source, idx) => (
+                      <p
+                        key={`${source.source_id}-${idx}`}
+                        className="text-xs text-muted-foreground"
+                      >
+                        [{idx + 1}] {source.snippet}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}
