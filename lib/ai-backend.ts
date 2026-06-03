@@ -47,7 +47,12 @@ export async function askBackend(
   try {
     response = await fetch(`${AI_BACKEND_URL}/ask`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        // Skip ngrok's free-tier browser interstitial when AI_BACKEND_URL is a
+        // *.ngrok-free.dev tunnel. Harmless when the backend is a plain host.
+        'ngrok-skip-browser-warning': '1',
+      },
       body: JSON.stringify({ question, scope, top_k: topK }),
     });
   } catch {
