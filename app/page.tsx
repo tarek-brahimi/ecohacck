@@ -158,7 +158,7 @@ export default function LandingPage() {
             Join thousands of young people discovering new passions and making meaningful connections.
           </p>
           <Link href="/signup">
-            <Button size="lg" variant="secondary" className="w-full sm:w-auto">Create Your Account</Button>
+            <Button size="lg" variant="secondary" className="w-full sm:w-auto bg-black text-white hover:bg-slate-900">Create Your Account</Button>
           </Link>
         </motion.div>
       </section>
