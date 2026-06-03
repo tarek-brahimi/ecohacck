@@ -1,38 +1,89 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { useAuth } from '@/lib/auth-context';
-import { mockActivities, mockEnrollments } from '@/lib/mock-data';
-import { ActivityCard } from '@/components/activity-card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Activity } from '@/lib/types';
-import { Search, Filter, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { ActivityCard } from "@/components/activity-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Activity } from "@/lib/types";
+import {
+  apiRequest,
+  parseActivities,
+  parseUserProfile,
+} from "@/lib/api-client";
+import { Search, Filter, X } from "lucide-react";
 
 export default function FeedPage() {
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('');
-  const [enrolledActivities, setEnrolledActivities] = useState(
-    new Set(mockEnrollments.filter(e => e.userId === user?.id).map(e => e.activityId))
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [enrolledActivities, setEnrolledActivities] = useState<Set<string>>(
+    new Set(),
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
 
-  const categories = ['sports', 'arts', 'tech', 'social', 'outdoor', 'music', 'other'];
-  const difficulties = ['easy', 'medium', 'hard'];
+  useEffect(() => {
+    let isActive = true;
+
+    const loadFeed = async () => {
+      try {
+        const [activityData, profileData] = await Promise.all([
+          apiRequest<Activity[]>("/api/activities"),
+          apiRequest<{ joinedActivities: string[] }>(
+            "/api/users/me/profile",
+          ).catch(() => ({ joinedActivities: [] })),
+        ]);
+
+        if (!isActive) {
+          return;
+        }
+
+        setActivities(parseActivities(activityData));
+        setEnrolledActivities(
+          new Set((profileData.joinedActivities || []).map(String)),
+        );
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadFeed();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const categories = [
+    "sports",
+    "arts",
+    "tech",
+    "social",
+    "outdoor",
+    "music",
+    "other",
+  ];
+  const difficulties = ["easy", "medium", "hard"];
 
   const filteredActivities = useMemo(() => {
-    return Object.values(mockActivities).filter(activity => {
-      const matchesSearch = activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    return activities.filter((activity) => {
+      const matchesSearch =
+        activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         activity.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = !selectedCategory || activity.category === selectedCategory;
-      const matchesDifficulty = !selectedDifficulty || activity.difficultyLevel === selectedDifficulty;
+      const matchesCategory =
+        !selectedCategory || activity.category === selectedCategory;
+      const matchesDifficulty =
+        !selectedDifficulty || activity.difficultyLevel === selectedDifficulty;
       return matchesSearch && matchesCategory && matchesDifficulty;
     });
-  }, [searchQuery, selectedCategory, selectedDifficulty]);
+  }, [activities, searchQuery, selectedCategory, selectedDifficulty]);
 
-  const handleEnroll = (activityId: string) => {
-    setEnrolledActivities(prev => {
+  const handleEnroll = async (activityId: string) => {
+    setEnrolledActivities((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(activityId)) {
         newSet.delete(activityId);
@@ -41,9 +92,14 @@ export default function FeedPage() {
       }
       return newSet;
     });
+
+    await apiRequest(`/api/activities/${activityId}/enroll`, {
+      method: "POST",
+    });
   };
 
-  const hasActiveFilters = searchQuery || selectedCategory || selectedDifficulty;
+  const hasActiveFilters =
+    searchQuery || selectedCategory || selectedDifficulty;
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,8 +107,12 @@ export default function FeedPage() {
       <div className="sticky top-0 z-30 bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Activity Feed</h1>
-            <p className="text-muted-foreground mt-1">Discover activities that match your interests</p>
+            <h1 className="text-3xl font-bold text-foreground">
+              Activity Feed
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Discover activities that match your interests
+            </p>
           </div>
 
           {/* Search Bar */}
@@ -83,7 +143,7 @@ export default function FeedPage() {
                 className="px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm cursor-pointer hover:border-primary transition"
               >
                 <option value="">All Categories</option>
-                {categories.map(cat => (
+                {categories.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat.charAt(0).toUpperCase() + cat.slice(1)}
                   </option>
@@ -97,7 +157,7 @@ export default function FeedPage() {
                 className="px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm cursor-pointer hover:border-primary transition"
               >
                 <option value="">All Difficulties</option>
-                {difficulties.map(diff => (
+                {difficulties.map((diff) => (
                   <option key={diff} value={diff}>
                     {diff.charAt(0).toUpperCase() + diff.slice(1)}
                   </option>
@@ -110,9 +170,9 @@ export default function FeedPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('');
-                    setSelectedDifficulty('');
+                    setSearchQuery("");
+                    setSelectedCategory("");
+                    setSelectedDifficulty("");
                   }}
                   className="gap-1 text-muted-foreground hover:text-foreground"
                 >
@@ -125,14 +185,19 @@ export default function FeedPage() {
 
           {/* Results Count */}
           <p className="text-sm text-muted-foreground">
-            Showing {filteredActivities.length} of {Object.keys(mockActivities).length} activities
+            Showing {filteredActivities.length} of {activities.length}{" "}
+            activities
           </p>
         </div>
 
         {/* Activity Grid */}
-        {filteredActivities.length > 0 ? (
+        {isLoading ? (
+          <div className="py-20 text-center text-muted-foreground">
+            Loading activities...
+          </div>
+        ) : filteredActivities.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredActivities.map(activity => (
+            {filteredActivities.map((activity) => (
               <ActivityCard
                 key={activity.id}
                 activity={activity}
@@ -144,17 +209,20 @@ export default function FeedPage() {
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">No activities found</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              No activities found
+            </h3>
             <p className="text-muted-foreground max-w-md">
-              Try adjusting your filters or search query to find activities that match your interests.
+              Try adjusting your filters or search query to find activities that
+              match your interests.
             </p>
             <Button
               variant="outline"
               className="mt-6"
               onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('');
-                setSelectedDifficulty('');
+                setSearchQuery("");
+                setSelectedCategory("");
+                setSelectedDifficulty("");
               }}
             >
               Reset Filters

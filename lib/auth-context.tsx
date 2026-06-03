@@ -1,15 +1,21 @@
-'use client';
+"use client";
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { User } from './types';
-import { mockUsers, getMockCurrentUser } from './mock-data';
+import React, { createContext, useState, useContext, useEffect } from "react";
+import { ActivityCategory, AgeGroup, User } from "./types";
+import { apiRequest, parseUser } from "./api-client";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, fullName: string) => Promise<void>;
-  logout: () => void;
+  signup: (
+    email: string,
+    password: string,
+    fullName: string,
+    ageGroup?: AgeGroup,
+    interests?: ActivityCategory[],
+  ) => Promise<void>;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -18,56 +24,76 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
 
-  // Check if user is logged in on mount (from localStorage)
   useEffect(() => {
-    setIsMounted(true);
-    const storedUserId = localStorage.getItem('wakti_user_id');
-    if (storedUserId) {
-      const currentUser = getMockCurrentUser(storedUserId);
-      setUser(currentUser);
-    }
-    setIsLoading(false);
+    let isActive = true;
+
+    const loadSession = async () => {
+      try {
+        const currentUser = await apiRequest<User>("/api/auth/me");
+        if (isActive) {
+          setUser(parseUser(currentUser));
+        }
+      } catch {
+        if (isActive) {
+          setUser(null);
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadSession();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Simulate API call
-    const foundUser = Object.values(mockUsers).find(u => u.email === email);
-    if (foundUser) {
-      localStorage.setItem('wakti_user_id', foundUser.id);
-      setUser(foundUser);
-    } else {
-      throw new Error('Invalid email or password');
+    setIsLoading(true);
+    try {
+      const currentUser = await apiRequest<User>("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      setUser(parseUser(currentUser));
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const signup = async (email: string, password: string, fullName: string) => {
-    // Check if user already exists
-    if (Object.values(mockUsers).some(u => u.email === email)) {
-      throw new Error('Email already registered');
+  const signup = async (
+    email: string,
+    password: string,
+    fullName: string,
+    ageGroup: AgeGroup = "teen",
+    interests: ActivityCategory[] = [],
+  ) => {
+    setIsLoading(true);
+    try {
+      const currentUser = await apiRequest<User>("/api/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          ageGroup,
+          interests,
+        }),
+      });
+      setUser(parseUser(currentUser));
+    } finally {
+      setIsLoading(false);
     }
-
-    // Create new user
-    const newUserId = `user-${Date.now()}`;
-    const newUser: User = {
-      id: newUserId,
-      email,
-      fullName,
-      ageGroup: 'teen',
-      interests: [],
-      points: 0,
-      role: 'user',
-      createdAt: new Date(),
-    };
-
-    mockUsers[newUserId] = newUser;
-    localStorage.setItem('wakti_user_id', newUserId);
-    setUser(newUser);
   };
 
-  const logout = () => {
-    localStorage.removeItem('wakti_user_id');
+  const logout = async () => {
+    await apiRequest("/api/auth/logout", { method: "POST" }).catch(
+      () => undefined,
+    );
     setUser(null);
   };
 
@@ -75,11 +101,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        isLoading: !isMounted || isLoading,
+        isLoading,
         login,
         signup,
         logout,
-        isAuthenticated: isMounted ? !!user : false,
+        isAuthenticated: !!user,
       }}
     >
       {children}
@@ -87,10 +113,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 }

@@ -1,14 +1,23 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/lib/auth-context';
-import { getLeaderboard } from '@/lib/mock-data';
-import { Card } from '@/components/ui/card';
-import { Trophy, Medal } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { Card } from "@/components/ui/card";
+import { Trophy, Medal } from "lucide-react";
+import { LeaderboardEntry } from "@/lib/types";
+import { apiRequest, parseLeaderboardEntry } from "@/lib/api-client";
 
 export default function LeaderboardPage() {
   const { user } = useAuth();
-  const leaderboard = getLeaderboard();
-  const userRank = leaderboard.find(entry => entry.userId === user?.id);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+
+  useEffect(() => {
+    apiRequest<LeaderboardEntry[]>("/api/leaderboard")
+      .then((data) => setLeaderboard(data.map(parseLeaderboardEntry)))
+      .catch(() => setLeaderboard([]));
+  }, []);
+
+  const userRank = leaderboard.find((entry) => entry.userId === user?.id);
 
   const getRankMedal = (rank: number) => {
     switch (rank) {
@@ -19,7 +28,11 @@ export default function LeaderboardPage() {
       case 3:
         return <Medal className="w-5 h-5 text-amber-600" />;
       default:
-        return <span className="text-sm font-semibold text-muted-foreground">#{rank}</span>;
+        return (
+          <span className="text-sm font-semibold text-muted-foreground">
+            #{rank}
+          </span>
+        );
     }
   };
 
@@ -29,7 +42,9 @@ export default function LeaderboardPage() {
       <div className="sticky top-0 z-30 bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <h1 className="text-3xl font-bold text-foreground">Leaderboard</h1>
-          <p className="text-muted-foreground mt-1">Climb the ranks and earn points by joining activities</p>
+          <p className="text-muted-foreground mt-1">
+            Climb the ranks and earn points by joining activities
+          </p>
         </div>
       </div>
 
@@ -41,15 +56,21 @@ export default function LeaderboardPage() {
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Your Rank</p>
-                <p className="text-3xl font-bold text-primary"># {userRank.rank}</p>
+                <p className="text-3xl font-bold text-primary">
+                  # {userRank.rank}
+                </p>
               </div>
               <div className="text-center border-l border-r border-border">
                 <p className="text-sm text-muted-foreground">Your Points</p>
-                <p className="text-3xl font-bold text-foreground">{userRank.points}</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {userRank.points}
+                </p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Activities</p>
-                <p className="text-3xl font-bold text-foreground">{userRank.activities}</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {userRank.activities}
+                </p>
               </div>
             </div>
           </Card>
@@ -61,10 +82,18 @@ export default function LeaderboardPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rank</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Points</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Activities</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Rank
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Points
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Activities
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -75,8 +104,8 @@ export default function LeaderboardPage() {
                       key={entry.userId}
                       className={`${
                         isCurrentUser
-                          ? 'bg-primary/5 border-l-4 border-l-primary'
-                          : 'hover:bg-muted/50 transition'
+                          ? "bg-primary/5 border-l-4 border-l-primary"
+                          : "hover:bg-muted/50 transition"
                       }`}
                     >
                       <td className="px-6 py-4 text-sm">
@@ -93,9 +122,13 @@ export default function LeaderboardPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <span className="font-bold text-primary">{entry.points}</span>
+                        <span className="font-bold text-primary">
+                          {entry.points}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">{entry.activities}</td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">
+                        {entry.activities}
+                      </td>
                     </tr>
                   );
                 })}
@@ -106,22 +139,39 @@ export default function LeaderboardPage() {
 
         {/* Info Box */}
         <Card className="mt-6 p-6 bg-muted/50 border-dashed">
-          <h3 className="font-semibold text-foreground mb-2">How does scoring work?</h3>
+          <h3 className="font-semibold text-foreground mb-2">
+            How does scoring work?
+          </h3>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
-              <span className="font-medium text-foreground">Join an activity:</span> Earn 100 points
+              <span className="font-medium text-foreground">
+                Join an activity:
+              </span>{" "}
+              Earn 100 points
             </li>
             <li>
-              <span className="font-medium text-foreground">Complete an activity:</span> Earn bonus points based on difficulty
+              <span className="font-medium text-foreground">
+                Complete an activity:
+              </span>{" "}
+              Earn bonus points based on difficulty
             </li>
             <li>
-              <span className="font-medium text-foreground">Easy activities:</span> +50 bonus points
+              <span className="font-medium text-foreground">
+                Easy activities:
+              </span>{" "}
+              +50 bonus points
             </li>
             <li>
-              <span className="font-medium text-foreground">Medium activities:</span> +100 bonus points
+              <span className="font-medium text-foreground">
+                Medium activities:
+              </span>{" "}
+              +100 bonus points
             </li>
             <li>
-              <span className="font-medium text-foreground">Hard activities:</span> +200 bonus points
+              <span className="font-medium text-foreground">
+                Hard activities:
+              </span>{" "}
+              +200 bonus points
             </li>
           </ul>
         </Card>

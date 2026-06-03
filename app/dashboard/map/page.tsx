@@ -1,27 +1,58 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
-import { mockActivities, mockEnrollments } from '@/lib/mock-data';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ActivityMap } from '@/components/activity-map';
-import { MapPin, X, Moon, Sun } from 'lucide-react';
-import { useTheme } from '@/components/theme-provider';
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ActivityMap } from "@/components/activity-map";
+import { MapPin, X, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
+import { Activity } from "@/lib/types";
+import { apiRequest, parseActivities } from "@/lib/api-client";
 
 export default function MapPage() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
-  const [enrolledActivities, setEnrolledActivities] = useState(
-    new Set(mockEnrollments.filter(e => e.userId === user?.id).map(e => e.activityId))
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [enrolledActivities, setEnrolledActivities] = useState<Set<string>>(
+    new Set(),
   );
 
-  const activities = Object.values(mockActivities);
-  const selectedActivityData = selectedActivity ? mockActivities[selectedActivity] : null;
+  useEffect(() => {
+    let isActive = true;
 
-  const handleEnroll = (activityId: string) => {
-    setEnrolledActivities(prev => {
+    const loadMap = async () => {
+      const [activityData, profileData] = await Promise.all([
+        apiRequest<Activity[]>("/api/activities"),
+        apiRequest<{ joinedActivities: string[] }>(
+          "/api/users/me/profile",
+        ).catch(() => ({ joinedActivities: [] })),
+      ]);
+
+      if (!isActive) {
+        return;
+      }
+
+      setActivities(parseActivities(activityData));
+      setEnrolledActivities(
+        new Set((profileData.joinedActivities || []).map(String)),
+      );
+    };
+
+    loadMap().catch(() => undefined);
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const selectedActivityData = selectedActivity
+    ? activities.find((activity) => activity.id === selectedActivity) || null
+    : null;
+
+  const handleEnroll = async (activityId: string) => {
+    setEnrolledActivities((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(activityId)) {
         newSet.delete(activityId);
@@ -29,6 +60,10 @@ export default function MapPage() {
         newSet.add(activityId);
       }
       return newSet;
+    });
+
+    await apiRequest(`/api/activities/${activityId}/enroll`, {
+      method: "POST",
     });
   };
 
@@ -39,16 +74,22 @@ export default function MapPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Activity Map</h1>
-            <p className="text-muted-foreground mt-1">Find activities near you on the interactive map</p>
+            <p className="text-muted-foreground mt-1">
+              Find activities near you on the interactive map
+            </p>
           </div>
           <Button
             variant="outline"
             size="icon"
             onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             className="rounded-full"
           >
-            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {theme === "dark" ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
           </Button>
         </div>
       </div>
@@ -74,7 +115,9 @@ export default function MapPage() {
               <Card className="p-6 space-y-4 sticky top-24 shadow-xl border-border/50">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">{selectedActivityData.title}</h3>
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {selectedActivityData.title}
+                    </h3>
                     <span className="inline-block mt-2 px-3 py-1 text-xs font-medium bg-primary/20 text-primary rounded-full capitalize">
                       {selectedActivityData.category}
                     </span>
@@ -89,27 +132,41 @@ export default function MapPage() {
                   </Button>
                 </div>
 
-                <p className="text-sm text-muted-foreground leading-relaxed">{selectedActivityData.description}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {selectedActivityData.description}
+                </p>
 
                 <div className="space-y-3 text-sm border-t border-border pt-4">
                   <div className="flex items-center gap-3">
                     <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span className="text-foreground">{selectedActivityData.location}</span>
+                    <span className="text-foreground">
+                      {selectedActivityData.location}
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 pt-2">
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Difficulty</p>
-                      <p className="text-foreground font-medium capitalize mt-1">{selectedActivityData.difficultyLevel}</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Difficulty
+                      </p>
+                      <p className="text-foreground font-medium capitalize mt-1">
+                        {selectedActivityData.difficultyLevel}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Participants</p>
-                      <p className="text-foreground font-medium mt-1">{selectedActivityData.enrollmentCount}</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Participants
+                      </p>
+                      <p className="text-foreground font-medium mt-1">
+                        {selectedActivityData.enrollmentCount}
+                      </p>
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Date & Time</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                      Date & Time
+                    </p>
                     <p className="text-foreground font-medium mt-1">
                       {selectedActivityData.date.toLocaleDateString()}
                     </p>
@@ -121,18 +178,27 @@ export default function MapPage() {
 
                 <Button
                   className="w-full mt-4"
-                  variant={enrolledActivities.has(selectedActivityData.id) ? 'outline' : 'default'}
+                  variant={
+                    enrolledActivities.has(selectedActivityData.id)
+                      ? "outline"
+                      : "default"
+                  }
                   onClick={() => handleEnroll(selectedActivityData.id)}
                 >
-                  {enrolledActivities.has(selectedActivityData.id) ? '✓ Enrolled' : '+ Enroll Now'}
+                  {enrolledActivities.has(selectedActivityData.id)
+                    ? "✓ Enrolled"
+                    : "+ Enroll Now"}
                 </Button>
               </Card>
             ) : (
               <Card className="p-8 text-center space-y-4 sticky top-24 shadow-xl border-border/50">
                 <div className="text-5xl">📍</div>
-                <h3 className="text-lg font-semibold text-foreground">Select an Activity</h3>
+                <h3 className="text-lg font-semibold text-foreground">
+                  Select an Activity
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Click on a marker on the map to view activity details and enroll.
+                  Click on a marker on the map to view activity details and
+                  enroll.
                 </p>
               </Card>
             )}
