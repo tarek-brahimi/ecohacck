@@ -68,9 +68,9 @@ export default function LandingPage() {
         animate="visible"
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
             <BrandLogo />
-          </div>
+          </Link>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition">Features</a>
             <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition">How It Works</a>
@@ -204,7 +204,7 @@ export default function LandingPage() {
         viewport={{ once: true, amount: 0.2 }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2026 chabeb.</p>
+          <p>&copy; 2026 shabeb.</p>
         
 
         </div>
