@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Next.js 16 requires Node 20+. Pin it so deploys are reproducible.
+  NODE_VERSION = "20"
+
+# Next.js runtime. Also enabled in the Netlify UI; declaring it here keeps
+# the deploy reproducible from the repo instead of UI-only configuration.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
