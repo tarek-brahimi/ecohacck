@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Cake, Sparkles, ActivitySquare } from "lucide-react";
+import { Mail, Cake, ActivitySquare } from "lucide-react";
 import { Activity, UserProfile } from "@/lib/types";
 import {
   apiRequest,

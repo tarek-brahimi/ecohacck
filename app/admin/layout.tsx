@@ -5,8 +5,9 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { BrandLogo } from '@/components/brand-logo';
 import Link from 'next/link';
-import { Sparkles, LayoutDashboard, Users, ActivitySquare, LogOut, Menu } from 'lucide-react';
+import { LayoutDashboard, Users, ActivitySquare, LogOut, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { fadeInUp } from '@/components/ui/motion';
 
@@ -26,17 +27,55 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && (!user || user.role !== 'admin')) {
-      router.push('/dashboard/feed');
+    if (!isLoading && !user) {
+      router.push('/login');
     }
   }, [isLoading, user, router]);
 
-  if (isLoading || !user || user.role !== 'admin') {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4" />
           <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  if (user.role !== 'admin') {
+    return (
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="max-w-md text-center space-y-4">
+          <h1 className="text-2xl font-bold text-foreground">Admin access required</h1>
+          <p className="text-muted-foreground">
+            You are signed in as <span className="font-medium text-foreground">{user.email}</span> with
+            role <span className="font-medium text-foreground">{user.role}</span>. Only admin accounts
+            can use this panel.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Sign in with an admin account (e.g. after running <code className="text-xs">pnpm db:seed</code>, use{' '}
+            <code className="text-xs">admin@example.com</code> / <code className="text-xs">password123</code>),
+            or ask an admin to set your role in Admin → Users.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <Link href="/dashboard/feed">
+              <Button variant="outline">Back to Feed</Button>
+            </Link>
+            <Button
+              variant="default"
+              onClick={() => {
+                logout();
+                router.push('/login');
+              }}
+            >
+              Sign in as admin
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -67,10 +106,7 @@ export default function AdminLayout({
       >
         {/* Logo */}
         <Link href="/admin" className="flex items-center gap-2 mb-8 hover:opacity-80 transition">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold text-foreground">Wakti</span>
+          <BrandLogo />
         </Link>
 
         {/* Admin Badge */}
