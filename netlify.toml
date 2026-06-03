@@ -6,6 +6,13 @@
   # Next.js 16 requires Node 20+. Pin it so deploys are reproducible.
   NODE_VERSION = "20"
 
+  # MYSQL_USER is only read server-side in lib/db.ts (mysql2, Node-only) and the
+  # local seed script. Its value is never inlined into client/edge bundles by
+  # Next.js. The secrets scanner matches it as an incidental substring inside
+  # generated error pages and vendored Deno std-lib files (false positive), so
+  # exclude this key from scanning.
+  SECRETS_SCAN_OMIT_KEYS = "MYSQL_USER"
+
 # Next.js runtime. Also enabled in the Netlify UI; declaring it here keeps
 # the deploy reproducible from the repo instead of UI-only configuration.
 [[plugins]]
