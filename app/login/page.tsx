@@ -25,8 +25,12 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      router.push('/dashboard/feed');
+      const loggedInUser = await login(email, password);
+      if (loggedInUser?.role === 'admin') {
+        router.push('/admin/activities');
+      } else {
+        router.push('/dashboard/feed');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -36,8 +40,9 @@ export default function LoginPage() {
 
   // Mock credentials for demo
   const demoAccounts = [
-    { email: 'alex@example.com', password: 'password123' },
-    { email: 'jordan@example.com', password: 'password123' },
+    { email: 'alex@example.com', password: 'password123', label: 'Youth user' },
+    { email: 'house@example.com', password: 'password123', label: 'House owner' },
+    { email: 'admin@example.com', password: 'password123', label: 'Admin' },
   ];
 
   return (
@@ -133,7 +138,7 @@ export default function LoginPage() {
                     setPassword(account.password);
                   }}
                 >
-                  Demo: {account.email}
+                  {account.label}: {account.email}
                 </Button>
               ))}
             </div>

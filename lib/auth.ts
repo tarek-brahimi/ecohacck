@@ -1,17 +1,11 @@
 import crypto from 'node:crypto';
-import { jwtVerify, SignJWT } from 'jose';
+import { SignJWT } from 'jose';
 import { NextResponse } from 'next/server';
 
-import type { UserRole } from '@/lib/types';
+import type { SessionPayload } from '@/lib/session';
 
 export const AUTH_COOKIE_NAME = 'wakti_session';
-
-export interface SessionPayload {
-  userId: string;
-  email: string;
-  role: UserRole;
-  fullName: string;
-}
+export type { SessionPayload };
 
 function getAuthSecret() {
   const secret = process.env.AUTH_SECRET || 'wakti-development-secret';
@@ -41,22 +35,6 @@ export async function signSession(session: SessionPayload) {
     .setIssuedAt()
     .setExpirationTime('7d')
     .sign(getAuthSecret());
-}
-
-export async function verifySession(token: string) {
-  const result = await jwtVerify(token, getAuthSecret());
-  const role = result.payload.role;
-
-  if (role !== 'user' && role !== 'admin') {
-    throw new Error('Invalid session token');
-  }
-
-  return {
-    userId: result.payload.sub ?? '',
-    email: String(result.payload.email ?? ''),
-    role,
-    fullName: String(result.payload.fullName ?? ''),
-  } satisfies SessionPayload;
 }
 
 export function setAuthCookie(response: NextResponse, token: string) {

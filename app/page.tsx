@@ -5,14 +5,21 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { ActivityMap } from '@/components/activity-map';
 import Link from 'next/link';
 import { Sparkles, MapPin, Users, Zap } from 'lucide-react';
 import { fadeInUp, pageTransition } from '@/components/ui/motion';
+import { Activity } from '@/lib/types';
+import { apiRequest, parseActivities } from '@/lib/api-client';
+
+const EMPTY_ENROLLMENTS = new Set<string>();
 
 export default function LandingPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -23,6 +30,27 @@ export default function LandingPage() {
       router.push('/dashboard/feed');
     }
   }, [isAuthenticated, isLoading, isMounted, router]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    apiRequest<Activity[]>('/api/activities')
+      .then((activityData) => {
+        if (!isActive) {
+          return;
+        }
+        setActivities(parseActivities(activityData));
+      })
+      .catch(() => {
+        if (isActive) {
+          setActivities([]);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   return (
     <motion.div
@@ -87,17 +115,23 @@ export default function LandingPage() {
 
         {/* Hero Visual */}
         <motion.div
-          className="mt-20 relative h-96 rounded-xl overflow-hidden border border-border bg-muted"
+          className="mt-20 relative rounded-xl overflow-hidden border border-border bg-muted"
           variants={fadeInUp}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
         >
-          <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-accent/5 to-primary/10 flex items-center justify-center">
-            <div className="text-center">
-              <Zap className="w-24 h-24 text-primary/30 mx-auto mb-4" />
-              <h2 className="text-3xl font-bold text-primary mb-2">Activity Showcase</h2>
-              <p className="text-foreground">Activity coming soon</p>
+          <div className="p-4 bg-linear-to-br from-muted/80 via-muted to-muted/70">
+            <ActivityMap
+              activities={activities}
+              selectedActivity={selectedActivity}
+              onSelectActivity={setSelectedActivity}
+              enrolledActivities={EMPTY_ENROLLMENTS}
+            />
+            <div className="mt-3 text-sm text-muted-foreground">
+              {activities.length
+                ? `${activities.length} approved activities are visible on this map.`
+                : 'No public activities are available yet.'}
             </div>
           </div>
         </motion.div>

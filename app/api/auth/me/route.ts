@@ -12,22 +12,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
   }
 
-  const userRow = await getUserById(session.userId);
-  if (!userRow) {
+  const user = await getUserById(session.userId);
+  if (!user) {
     return NextResponse.json({ success: false, error: 'User not found.' }, { status: 404 });
   }
 
   return NextResponse.json({
     success: true,
-    data: parseUser({
-      id: userRow.id,
-      email: userRow.email,
-      fullName: userRow.full_name,
-      ageGroup: userRow.age_group,
-      interests: Array.isArray(userRow.interests) ? userRow.interests : JSON.parse(userRow.interests || '[]'),
-      points: userRow.points,
-      role: userRow.role,
-      createdAt: userRow.created_at || new Date().toISOString(),
-    }),
+    data: parseUser(user),
   });
 }

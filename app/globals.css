@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import 'leaflet/dist/leaflet.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -37,6 +38,14 @@
   --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.93 0.01 0);
   --sidebar-ring: oklch(0.45 0.25 280);
+}
+
+.activity-map-container .leaflet-tile {
+  filter: grayscale(100%) brightness(1.02) contrast(0.96);
+}
+
+.activity-map-container .leaflet-control-zoom a {
+  color: #111827;
 }
 
 .dark {

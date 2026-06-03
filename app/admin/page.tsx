@@ -24,7 +24,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     Promise.all([
-      apiRequest<Activity[]>("/api/activities"),
+      apiRequest<Activity[]>("/api/activities?status=all"),
       apiRequest<Array<User & { activityCount?: number }>>(
         "/api/users?includeStats=1",
       ),

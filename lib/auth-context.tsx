@@ -7,7 +7,7 @@ import { apiRequest, parseUser } from "./api-client";
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   signup: (
     email: string,
     password: string,
@@ -59,7 +59,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-      setUser(parseUser(currentUser));
+      const parsedUser = parseUser(currentUser);
+      setUser(parsedUser);
+      return parsedUser;
     } finally {
       setIsLoading(false);
     }
