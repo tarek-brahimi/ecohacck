@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -8,6 +9,7 @@ import { useTheme } from '@/components/theme-provider';
 import Link from 'next/link';
 import { Sparkles, LayoutGrid, MapPin, MessageSquare, Trophy, User, LogOut, Menu, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
+import { fadeInUp } from '@/components/ui/motion';
 
 const NAV_ITEMS = [
   { href: '/dashboard/feed', label: 'Feed', icon: LayoutGrid },
@@ -61,9 +63,14 @@ export default function DashboardLayout({
       </div>
 
       {/* Sidebar */}
-      <aside className={`${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } md:translate-x-0 fixed md:relative w-64 h-screen bg-card border-r border-border p-6 transition-transform z-40 flex flex-col`}>
+      <motion.aside
+        className={`${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0 fixed md:relative w-64 h-screen bg-card border-r border-border p-6 transition-transform duration-500 ease-out z-40 flex flex-col`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         {/* Logo */}
         <Link href="/dashboard/feed" className="flex items-center gap-2 mb-8 hover:opacity-80 transition">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
@@ -123,20 +130,29 @@ export default function DashboardLayout({
           <LogOut className="w-5 h-5" />
           Sign Out
         </Button>
-      </aside>
+      </motion.aside>
 
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div
+        <motion.div
           className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
         />
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto pt-16 md:pt-0">
+      <motion.main
+        className="flex-1 overflow-auto pt-16 md:pt-0"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         {children}
-      </main>
+      </motion.main>
     </div>
   );
 }

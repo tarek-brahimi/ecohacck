@@ -3,9 +3,11 @@
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Sparkles, MapPin, Users, Zap } from 'lucide-react';
+import { fadeInUp, pageTransition } from '@/components/ui/motion';
 
 export default function LandingPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -23,9 +25,19 @@ export default function LandingPage() {
   }, [isAuthenticated, isLoading, isMounted, router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
+    <motion.div
+      className="min-h-screen bg-linear-to-b from-background via-background to-muted"
+      initial="hidden"
+      animate="visible"
+      variants={pageTransition}
+    >
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/40 backdrop-blur-sm bg-background/95">
+      <motion.header
+        className="sticky top-0 z-40 border-b border-border/40 backdrop-blur-sm bg-background/95"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -46,11 +58,17 @@ export default function LandingPage() {
             </Link>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Hero Section */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
-        <div className="text-center space-y-8">
+        <motion.div
+          className="text-center space-y-8"
+          variants={fadeInUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
           <h1 className="text-5xl md:text-6xl font-bold text-foreground leading-tight text-balance">
             Discover Youth <span className="text-primary">Activities</span> Near You
           </h1>
@@ -65,17 +83,23 @@ export default function LandingPage() {
               <Button size="lg" variant="outline" className="w-full sm:w-auto">Learn More</Button>
             </Link>
           </div>
-        </div>
+        </motion.div>
 
         {/* Hero Visual */}
-        <div className="mt-20 relative h-96 rounded-xl overflow-hidden border border-border bg-muted">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 flex items-center justify-center">
+        <motion.div
+          className="mt-20 relative h-96 rounded-xl overflow-hidden border border-border bg-muted"
+          variants={fadeInUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-accent/5 to-primary/10 flex items-center justify-center">
             <div className="text-center">
               <Zap className="w-24 h-24 text-primary/30 mx-auto mb-4" />
               <p className="text-muted-foreground">Activity showcase coming soon</p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Features Section */}
@@ -100,11 +124,20 @@ export default function LandingPage() {
                 description: 'Gain points for each activity, climb the leaderboard, and unlock achievements.',
               },
             ].map((feature, idx) => (
-              <div key={idx} className="p-8 rounded-lg border border-border bg-background hover:shadow-lg transition">
+              <motion.div
+                key={idx}
+                className="p-8 rounded-lg border border-border bg-background hover:shadow-lg transition-all duration-300 ease-out"
+                variants={fadeInUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ delay: idx * 0.12 }}
+                whileHover={{ y: -4 }}
+              >
                 <feature.icon className="w-8 h-8 text-primary mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
                 <p className="text-muted-foreground">{feature.description}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -112,7 +145,13 @@ export default function LandingPage() {
 
       {/* CTA Section */}
       <section id="how-it-works" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="bg-primary rounded-2xl p-12 text-center space-y-8">
+        <motion.div
+          className="bg-primary rounded-2xl p-12 text-center space-y-8"
+          variants={fadeInUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
           <h2 className="text-4xl font-bold text-primary-foreground">Ready to Start?</h2>
           <p className="text-lg text-primary-foreground/90 max-w-2xl mx-auto">
             Join thousands of young people discovering new passions and making meaningful connections.
@@ -120,15 +159,21 @@ export default function LandingPage() {
           <Link href="/signup">
             <Button size="lg" variant="secondary" className="w-full sm:w-auto">Create Your Account</Button>
           </Link>
-        </div>
+        </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-background/50">
+      <motion.footer
+        className="border-t border-border bg-background/50"
+        variants={fadeInUp}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm text-muted-foreground">
           <p>&copy; 2024 Wakti. All rights reserved.</p>
         </div>
-      </footer>
-    </div>
+      </motion.footer>
+    </motion.div>
   );
 }

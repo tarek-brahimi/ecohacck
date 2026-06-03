@@ -1,6 +1,6 @@
 'use client';
 
-import { User, Activity, ActivityEnrollment, LeaderboardEntry } from './types';
+import { User, Activity, ActivityEnrollment, LeaderboardEntry } from './models';
 
 // Mock Users
 export const mockUsers: Record<string, User> = {

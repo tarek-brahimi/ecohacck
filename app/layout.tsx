@@ -41,7 +41,9 @@ export default function RootLayout({
       <body className="font-sans antialiased bg-background text-foreground">
         <ThemeProvider>
           <AuthProvider>
-            {children}
+            <div className="min-h-screen">
+              {children}
+            </div>
           </AuthProvider>
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}

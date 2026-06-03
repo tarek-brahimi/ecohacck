@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
+import { fadeInUp, pageTransition } from '@/components/ui/motion';
 
 type AgeGroup = 'teen' | 'young-adult';
 type ActivityCategory = 'sports' | 'arts' | 'tech' | 'social' | 'outdoor' | 'music' | 'other';
@@ -66,9 +68,17 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted flex flex-col">
+    <motion.div
+      className="min-h-screen bg-linear-to-b from-background via-background to-muted flex flex-col"
+      initial="hidden"
+      animate="visible"
+      variants={pageTransition}
+    >
       {/* Header */}
-      <header className="border-b border-border/40 bg-background/95">
+      <motion.header
+        className="border-b border-border/40 bg-background/95"
+        variants={fadeInUp}
+      >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -77,12 +87,19 @@ export default function SignupPage() {
             <span className="text-xl font-bold text-foreground">Wakti</span>
           </Link>
         </div>
-      </header>
+      </motion.header>
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-md">
-          <div className="p-8 space-y-6">
+        <motion.div
+          className="w-full max-w-md"
+          variants={fadeInUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          <Card className="w-full max-w-md">
+            <div className="p-8 space-y-6">
             <div className="space-y-2 text-center">
               <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
               <p className="text-muted-foreground">Join Wakti and discover activities</p>
@@ -173,7 +190,8 @@ export default function SignupPage() {
             </div>
           </div>
         </Card>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
