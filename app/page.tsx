@@ -96,7 +96,8 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-accent/5 to-primary/10 flex items-center justify-center">
             <div className="text-center">
               <Zap className="w-24 h-24 text-primary/30 mx-auto mb-4" />
-              <p className="text-muted-foreground">Activity showcase coming soon</p>
+              <h2 className="text-3xl font-bold text-primary mb-2">Activity Showcase</h2>
+              <p className="text-foreground">Activity coming soon</p>
             </div>
           </div>
         </motion.div>
