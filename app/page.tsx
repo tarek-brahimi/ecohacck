@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ActivityMap } from '@/components/activity-map';
 import Link from 'next/link';
-import { Sparkles, MapPin, Users, Zap } from 'lucide-react';
+import { MapPin, Users, Zap } from 'lucide-react';
 import { fadeInUp, pageTransition } from '@/components/ui/motion';
 import { Activity } from '@/lib/types';
 import { apiRequest, parseActivities } from '@/lib/api-client';
@@ -68,10 +68,9 @@ export default function LandingPage() {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">Wakti</span>
+           
+            <span className="text-xl font-bold text-foreground">shabeb</span>
+            
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition">Features</a>
@@ -206,9 +205,13 @@ export default function LandingPage() {
         viewport={{ once: true, amount: 0.2 }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 Wakti. All rights reserved.</p>
+          <p>&copy; 2026 chabeb.</p>
+        
+
         </div>
+        
       </motion.footer>
     </motion.div>
+    
   );
 }
