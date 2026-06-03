@@ -1,4 +1,4 @@
-import type { Activity, ActivityEnrollment, LeaderboardEntry, User, UserProfile } from '@/lib/types';
+import type { Activity, LeaderboardEntry, User, UserProfile } from '@/lib/types';
 
 type ApiEnvelope<T> = {
   success?: boolean;
@@ -49,23 +49,18 @@ export function parseUserProfile(profile: UserProfile | { createdAt: string | Da
   };
 }
 
-export function parseActivity(activity: Activity | { date: string | Date; createdAt: string | Date; [key: string]: unknown }): Activity {
+export function parseActivity(activity: Activity | { date: string | Date; createdAt: string | Date; approvedAt?: string | Date | null; [key: string]: unknown }): Activity {
+  const approvedAt = activity.approvedAt;
   return {
     ...(activity as Activity),
     date: new Date(activity.date),
     createdAt: new Date(activity.createdAt),
+    approvedAt: approvedAt ? new Date(approvedAt) : null,
   };
 }
 
 export function parseActivities(activities: Activity[]) {
   return activities.map(parseActivity);
-}
-
-export function parseEnrollment(enrollment: ActivityEnrollment | { enrolledAt: string | Date; [key: string]: unknown }): ActivityEnrollment {
-  return {
-    ...(enrollment as ActivityEnrollment),
-    enrolledAt: new Date(enrollment.enrolledAt),
-  };
 }
 
 export function parseLeaderboardEntry(entry: LeaderboardEntry): LeaderboardEntry {

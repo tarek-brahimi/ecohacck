@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, Lock, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { User } from "@/lib/types";
 import { apiRequest, parseUser } from "@/lib/api-client";
 
@@ -14,6 +14,8 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<Array<User & { activityCount?: number }>>(
     [],
   );
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [roleError, setRoleError] = useState("");
 
   useEffect(() => {
     apiRequest<Array<User & { activityCount?: number }>>(
@@ -29,6 +31,34 @@ export default function AdminUsersPage() {
       })
       .catch(() => setUsers([]));
   }, []);
+
+  const handleRoleChange = async (userId: string, role: User["role"]) => {
+    setRoleError("");
+    setUpdatingUserId(userId);
+
+    try {
+      const updatedUser = await apiRequest<User>(`/api/users/${userId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ role }),
+      });
+
+      setUsers((currentUsers) =>
+        currentUsers.map((currentUser) =>
+          currentUser.id === userId
+            ? { ...currentUser, ...parseUser(updatedUser) }
+            : currentUser,
+        ),
+      );
+    } catch (error) {
+      setRoleError(
+        error instanceof Error
+          ? error.message
+          : "Unable to update user role.",
+      );
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -79,12 +109,13 @@ export default function AdminUsersPage() {
               <option value="">All Roles</option>
               <option value="user">User</option>
               <option value="admin">Admin</option>
+              <option value="house-owner">House Owner</option>
             </select>
           </div>
         </Card>
 
         {/* User Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="p-4">
             <p className="text-sm text-muted-foreground">Total Users</p>
             <p className="text-3xl font-bold text-foreground mt-2">
@@ -97,7 +128,17 @@ export default function AdminUsersPage() {
               {users.filter((u) => u.role === "admin").length}
             </p>
           </Card>
+          <Card className="p-4">
+            <p className="text-sm text-muted-foreground">House Owners</p>
+            <p className="text-3xl font-bold text-foreground mt-2">
+              {users.filter((u) => u.role === "house-owner").length}
+            </p>
+          </Card>
         </div>
+
+        {roleError ? (
+          <p className="mb-4 text-sm text-destructive">{roleError}</p>
+        ) : null}
 
         {/* Users Table */}
         <Card className="overflow-hidden">
@@ -146,7 +187,9 @@ export default function AdminUsersPage() {
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
                             user.role === "admin"
                               ? "bg-primary/10 text-primary"
-                              : "bg-muted text-muted-foreground"
+                              : user.role === "house-owner"
+                                ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                                : "bg-muted text-muted-foreground"
                           }`}
                         >
                           {user.role.charAt(0).toUpperCase() +
@@ -165,24 +208,26 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-4 text-sm text-muted-foreground">
                         {user.createdAt.toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 text-sm space-x-2 flex">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-1 text-muted-foreground hover:text-foreground"
-                        >
-                          <Eye className="w-4 h-4" />
-                          View
-                        </Button>
-                        {user.role === "user" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="gap-1 text-muted-foreground hover:text-foreground"
+                      <td className="px-6 py-4 text-sm">
+                        {user.role === "admin" ? (
+                          <span className="text-xs text-muted-foreground">
+                            Admin account
+                          </span>
+                        ) : (
+                          <select
+                            value={user.role}
+                            disabled={updatingUserId === user.id}
+                            onChange={(event) =>
+                              handleRoleChange(
+                                user.id,
+                                event.target.value as User["role"],
+                              )
+                            }
+                            className="px-2 py-1 rounded-lg border border-border bg-background text-foreground text-sm cursor-pointer"
                           >
-                            <Lock className="w-4 h-4" />
-                            Role
-                          </Button>
+                            <option value="user">User</option>
+                            <option value="house-owner">House Owner</option>
+                          </select>
                         )}
                       </td>
                     </tr>

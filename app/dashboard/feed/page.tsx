@@ -3,20 +3,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { ActivityCard } from "@/components/activity-card";
+import { ActivityMap } from "@/components/activity-map";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Activity } from "@/lib/types";
-import {
-  apiRequest,
-  parseActivities,
-  parseUserProfile,
-} from "@/lib/api-client";
+import { apiRequest, parseActivities } from "@/lib/api-client";
 import { Search, Filter, X } from "lucide-react";
 
 export default function FeedPage() {
   const { user } = useAuth();
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [pendingActivities, setPendingActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReviewingId, setIsReviewingId] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState("");
+  const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
   const [enrolledActivities, setEnrolledActivities] = useState<Set<string>>(
     new Set(),
   );
@@ -29,11 +31,17 @@ export default function FeedPage() {
 
     const loadFeed = async () => {
       try {
-        const [activityData, profileData] = await Promise.all([
+        const pendingRequest: Promise<Activity[]> =
+          user?.role === "house-owner"
+            ? apiRequest<Activity[]>("/api/activities?status=pending")
+            : Promise.resolve([]);
+
+        const [activityData, profileData, pendingData] = await Promise.all([
           apiRequest<Activity[]>("/api/activities"),
-          apiRequest<{ joinedActivities: string[] }>(
-            "/api/users/me/profile",
-          ).catch(() => ({ joinedActivities: [] })),
+          apiRequest<{ joinedActivities: string[] }>("/api/users/me/profile").catch(
+            () => ({ joinedActivities: [] }),
+          ),
+          pendingRequest.catch(() => []),
         ]);
 
         if (!isActive) {
@@ -41,6 +49,7 @@ export default function FeedPage() {
         }
 
         setActivities(parseActivities(activityData));
+        setPendingActivities(parseActivities(pendingData));
         setEnrolledActivities(
           new Set((profileData.joinedActivities || []).map(String)),
         );
@@ -51,12 +60,12 @@ export default function FeedPage() {
       }
     };
 
-    loadFeed();
+    loadFeed().catch(() => undefined);
 
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [user?.role]);
 
   const categories = [
     "sports",
@@ -82,7 +91,17 @@ export default function FeedPage() {
     });
   }, [activities, searchQuery, selectedCategory, selectedDifficulty]);
 
+  const selectedActivityData = useMemo(
+    () =>
+      selectedActivity
+        ? activities.find((activity) => activity.id === selectedActivity) || null
+        : null,
+    [activities, selectedActivity],
+  );
+
   const handleEnroll = async (activityId: string) => {
+    const currentlyEnrolled = enrolledActivities.has(activityId);
+
     setEnrolledActivities((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(activityId)) {
@@ -93,9 +112,51 @@ export default function FeedPage() {
       return newSet;
     });
 
-    await apiRequest(`/api/activities/${activityId}/enroll`, {
-      method: "POST",
-    });
+    try {
+      await apiRequest(`/api/activities/${activityId}/enroll`, {
+        method: "POST",
+      });
+    } catch {
+      setEnrolledActivities((prev) => {
+        const newSet = new Set(prev);
+        if (currentlyEnrolled) {
+          newSet.add(activityId);
+        } else {
+          newSet.delete(activityId);
+        }
+        return newSet;
+      });
+    }
+  };
+
+  const handlePendingDecision = async (
+    activityId: string,
+    status: "public" | "rejected",
+  ) => {
+    setReviewError("");
+    setIsReviewingId(activityId);
+    try {
+      await apiRequest(`/api/activities/${activityId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+
+      const [publicActivities, pendingActivitiesData] = await Promise.all([
+        apiRequest<Activity[]>("/api/activities"),
+        apiRequest<Activity[]>("/api/activities?status=pending"),
+      ]);
+
+      setActivities(parseActivities(publicActivities));
+      setPendingActivities(parseActivities(pendingActivitiesData));
+    } catch (error) {
+      setReviewError(
+        error instanceof Error
+          ? error.message
+          : "Unable to update activity status.",
+      );
+    } finally {
+      setIsReviewingId(null);
+    }
   };
 
   const hasActiveFilters =
@@ -103,7 +164,6 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="sticky top-0 z-30 bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
           <div>
@@ -111,61 +171,166 @@ export default function FeedPage() {
               Activity Feed
             </h1>
             <p className="text-muted-foreground mt-1">
-              Discover activities that match your interests
+              Discover approved activities and browse them on the map
             </p>
           </div>
 
-          {/* Search Bar */}
           <div className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2">
             <Search className="w-5 h-5 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search activities..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(event) => setSearchQuery(event.target.value)}
               className="border-0 bg-transparent text-foreground placeholder-muted-foreground focus:ring-0"
             />
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters */}
-        <div className="mb-8 space-y-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {user?.role === "house-owner" ? (
+          <Card className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">
+                  Pending activities for your house
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Approve an activity to publish it in the public feed and map.
+                </p>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {pendingActivities.length} pending
+              </span>
+            </div>
+
+            {reviewError ? (
+              <p className="text-sm text-destructive">{reviewError}</p>
+            ) : null}
+
+            {pendingActivities.length ? (
+              <div className="space-y-3">
+                {pendingActivities.map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="rounded-lg border border-border p-4 bg-background"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div className="space-y-1">
+                        <p className="font-semibold text-foreground">
+                          {activity.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {activity.location} •{" "}
+                          {activity.date.toLocaleDateString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {activity.description}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={isReviewingId === activity.id}
+                          onClick={() =>
+                            handlePendingDecision(activity.id, "rejected")
+                          }
+                        >
+                          Reject
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={isReviewingId === activity.id}
+                          onClick={() =>
+                            handlePendingDecision(activity.id, "public")
+                          }
+                        >
+                          {isReviewingId === activity.id
+                            ? "Saving..."
+                            : "Approve & Publish"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No pending activities right now.
+              </p>
+            )}
+          </Card>
+        ) : null}
+
+        <Card className="p-6 space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">
+                Activities map
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Grey interactive map with all approved activities by latitude and
+                longitude.
+              </p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {activities.length} published activities
+            </p>
+          </div>
+
+          <ActivityMap
+            activities={activities}
+            selectedActivity={selectedActivity}
+            onSelectActivity={setSelectedActivity}
+            enrolledActivities={enrolledActivities}
+          />
+
+          {selectedActivityData ? (
+            <div className="rounded-lg border border-border p-3 bg-muted/40 text-sm">
+              <p className="font-medium text-foreground">
+                {selectedActivityData.title}
+              </p>
+              <p className="text-muted-foreground">
+                {selectedActivityData.location} •{" "}
+                {selectedActivityData.date.toLocaleDateString()}
+              </p>
+            </div>
+          ) : null}
+        </Card>
+
+        <div className="space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
             <Filter className="w-5 h-5 text-muted-foreground" />
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Category Filter */}
               <select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={(event) => setSelectedCategory(event.target.value)}
                 className="px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm cursor-pointer hover:border-primary transition"
               >
                 <option value="">All Categories</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
                   </option>
                 ))}
               </select>
 
-              {/* Difficulty Filter */}
               <select
                 value={selectedDifficulty}
-                onChange={(e) => setSelectedDifficulty(e.target.value)}
+                onChange={(event) => setSelectedDifficulty(event.target.value)}
                 className="px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm cursor-pointer hover:border-primary transition"
               >
                 <option value="">All Difficulties</option>
-                {difficulties.map((diff) => (
-                  <option key={diff} value={diff}>
-                    {diff.charAt(0).toUpperCase() + diff.slice(1)}
+                {difficulties.map((difficulty) => (
+                  <option key={difficulty} value={difficulty}>
+                    {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
                   </option>
                 ))}
               </select>
 
-              {/* Clear Filters */}
-              {hasActiveFilters && (
+              {hasActiveFilters ? (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -179,18 +344,15 @@ export default function FeedPage() {
                   <X className="w-4 h-4" />
                   Clear
                 </Button>
-              )}
+              ) : null}
             </div>
           </div>
 
-          {/* Results Count */}
           <p className="text-sm text-muted-foreground">
-            Showing {filteredActivities.length} of {activities.length}{" "}
-            activities
+            Showing {filteredActivities.length} of {activities.length} activities
           </p>
         </div>
 
-        {/* Activity Grid */}
         {isLoading ? (
           <div className="py-20 text-center text-muted-foreground">
             Loading activities...
@@ -208,7 +370,6 @@ export default function FeedPage() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-lg font-semibold text-foreground mb-2">
               No activities found
             </h3>

@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { listUsers } from '@/lib/data-access';
+import { getSessionFromRequest } from '@/lib/request-auth';
+import type { UserRole } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  const session = await getSessionFromRequest(request);
+  if (!session || session.role !== 'admin') {
+    return NextResponse.json({ success: false, error: 'Forbidden.' }, { status: 403 });
+  }
+
   const searchParams = request.nextUrl.searchParams;
+  const roleParam = searchParams.get('role');
+  const role = roleParam === 'admin' || roleParam === 'user' || roleParam === 'house-owner'
+    ? roleParam as UserRole
+    : undefined;
   const users = await listUsers({
-    role: searchParams.get('role') === 'admin' || searchParams.get('role') === 'user' ? searchParams.get('role') as 'user' | 'admin' : undefined,
+    role,
     search: searchParams.get('search') || undefined,
   });
 

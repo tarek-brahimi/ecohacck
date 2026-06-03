@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/theme-provider';
 import Link from 'next/link';
-import { Sparkles, LayoutGrid, MapPin, MessageSquare, Trophy, User, LogOut, Menu, Moon, Sun } from 'lucide-react';
+import { Sparkles, LayoutGrid, MapPin, MessageSquare, Trophy, User, LogOut, Menu, Moon, Sun, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { fadeInUp } from '@/components/ui/motion';
 
@@ -91,6 +91,18 @@ export default function DashboardLayout({
 
         {/* Navigation */}
         <nav className="flex-1 space-y-2">
+          {user.role === 'admin' ? (
+            <Link href="/admin/activities">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-background"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Shield className="w-5 h-5" />
+                Admin Panel
+              </Button>
+            </Link>
+          ) : null}
           {NAV_ITEMS.map(item => (
             <Link key={item.href} href={item.href}>
               <Button

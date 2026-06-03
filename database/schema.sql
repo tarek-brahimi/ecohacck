@@ -1,12 +1,14 @@
-CREATE TABLE IF NOT EXISTS users (
-    id VARCHAR(36) PRIMARY KEY,
+CREATE DATABASE IF NOT EXISTS hackathon_db;
+USE hackathon_db;
+
+CREATE TABLE IF NOT EXISTS users (    id VARCHAR(36) PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
     age_group ENUM('teen', 'young-adult') NOT NULL,
     interests JSON NOT NULL,
     points INT NOT NULL DEFAULT 0,
-    role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+    role ENUM('user', 'admin', 'house-owner') NOT NULL DEFAULT 'user',
     bio TEXT NULL,
     avatar VARCHAR(500) NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -32,6 +34,9 @@ CREATE TABLE IF NOT EXISTS activities (
     image_url VARCHAR(500) NOT NULL,
     difficulty_level ENUM('easy', 'medium', 'hard') NOT NULL,
     organizer_id VARCHAR(36) NOT NULL,
+    house_owner_id VARCHAR(36) NULL,
+    status ENUM('pending', 'public', 'rejected') NOT NULL DEFAULT 'pending',
+    approved_at DATETIME NULL,
     enrollment_count INT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

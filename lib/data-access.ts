@@ -1,10 +1,13 @@
-import { execute, query } from '@/lib/db';
+import { RowDataPacket } from 'mysql2';
+
+import { execute, query, type SqlValue } from '@/lib/db';
 
 import type {
   Activity,
   ActivityCategory,
   ActivityEnrollment,
   AgeGroup,
+  ActivityStatus,
   DifficultyLevel,
   LeaderboardEntry,
   User,
@@ -15,7 +18,7 @@ import { hashPassword } from '@/lib/auth';
 
 type DbDate = Date | string | null | undefined;
 
-type UserRow = {
+type UserRow = RowDataPacket & {
   id: string;
   email: string;
   password_hash: string;
@@ -29,7 +32,7 @@ type UserRow = {
   created_at: DbDate;
 };
 
-type ActivityRow = {
+type ActivityRow = RowDataPacket & {
   id: string;
   title: string;
   description: string;
@@ -41,11 +44,14 @@ type ActivityRow = {
   image_url: string;
   difficulty_level: DifficultyLevel;
   organizer_id: string;
+  house_owner_id: string | null;
+  status: ActivityStatus;
+  approved_at: DbDate;
   enrollment_count: number;
   created_at: DbDate;
 };
 
-type EnrollmentRow = {
+type EnrollmentRow = RowDataPacket & {
   id: string;
   user_id: string;
   activity_id: string;
@@ -107,8 +113,11 @@ function toActivity(row: ActivityRow): Activity {
     imageUrl: row.image_url,
     difficultyLevel: row.difficulty_level,
     organizerId: row.organizer_id,
+    houseOwnerId: row.house_owner_id ?? '',
+    status: row.status,
     enrollmentCount: Number(row.enrollment_count),
     createdAt: toDate(row.created_at),
+    approvedAt: row.approved_at ? toDate(row.approved_at) : null,
   };
 }
 
@@ -123,13 +132,22 @@ function toEnrollment(row: EnrollmentRow): ActivityEnrollment {
 
 function buildTextSearch(search?: string) {
   if (!search) {
-    return { clause: '', params: [] as unknown[] };
+    return { clause: '', params: [] as SqlValue[] };
   }
 
   return {
     clause: ' AND (u.full_name LIKE ? OR u.email LIKE ?)',
     params: [`%${search}%`, `%${search}%`],
   };
+}
+
+async function fetchUserRowById(userId: string) {
+  const rows = await query<UserRow[]>(
+    'SELECT id, email, password_hash, full_name, age_group, interests, points, role, bio, avatar, created_at FROM users WHERE id = ? LIMIT 1',
+    [userId]
+  );
+
+  return rows[0] ?? null;
 }
 
 export async function getUserByEmail(email: string) {
@@ -141,13 +159,9 @@ export async function getUserByEmail(email: string) {
   return rows[0] ?? null;
 }
 
-export async function getUserById(userId: string) {
-  const rows = await query<UserRow[]>(
-    'SELECT id, email, password_hash, full_name, age_group, interests, points, role, bio, avatar, created_at FROM users WHERE id = ? LIMIT 1',
-    [userId]
-  );
-
-  return rows[0] ?? null;
+export async function getUserById(userId: string): Promise<User | null> {
+  const row = await fetchUserRowById(userId);
+  return row ? toUser(row) : null;
 }
 
 export async function createUser(input: {
@@ -169,12 +183,17 @@ export async function createUser(input: {
   return getUserById(id);
 }
 
+export async function updateUserRole(userId: string, role: UserRole) {
+  await execute('UPDATE users SET role = ?, updated_at = NOW() WHERE id = ?', [role, userId]);
+  return getUserById(userId);
+}
+
 export async function updateUserProfile(
   userId: string,
   updates: Partial<Pick<UserProfile, 'fullName' | 'ageGroup' | 'interests' | 'bio' | 'avatar'>>
-) {
+): Promise<User | null> {
   const fields: string[] = [];
-  const params: unknown[] = [];
+  const params: SqlValue[] = [];
 
   if (updates.fullName) {
     fields.push('full_name = ?');
@@ -233,21 +252,21 @@ export async function listUsers(filters?: { role?: UserRole; search?: string }) 
 }
 
 export async function getUserProfile(userId: string) {
-  const user = await getUserById(userId);
-  if (!user) {
+  const row = await fetchUserRowById(userId);
+  if (!row) {
     return null;
   }
 
-  const activities = await query<Array<{ activity_id: string }>>(
+  const activities = await query<Array<RowDataPacket & { activity_id: string }>>(
     'SELECT activity_id FROM activity_enrollments WHERE user_id = ? ORDER BY enrolled_at DESC',
     [userId]
   );
 
-  return toUserProfile(user, activities.map((activity) => activity.activity_id));
+  return toUserProfile(row, activities.map((activity) => activity.activity_id));
 }
 
-export async function listActivities(filters?: { category?: ActivityCategory; search?: string }) {
-  const params: unknown[] = [];
+export async function listActivities(filters?: { category?: ActivityCategory; search?: string; status?: ActivityStatus | 'all'; houseOwnerId?: string }) {
+  const params: SqlValue[] = [];
   const whereParts: string[] = [];
 
   if (filters?.category) {
@@ -260,9 +279,21 @@ export async function listActivities(filters?: { category?: ActivityCategory; se
     params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
   }
 
+  if (filters?.status && filters.status !== 'all') {
+    whereParts.push('a.status = ?');
+    params.push(filters.status);
+  } else if (!filters?.status) {
+    whereParts.push("a.status = 'public'");
+  }
+
+  if (filters?.houseOwnerId) {
+    whereParts.push('a.house_owner_id = ?');
+    params.push(filters.houseOwnerId);
+  }
+
   const rows = await query<ActivityRow[]>(
     `SELECT a.id, a.title, a.description, a.category, a.location, a.latitude, a.longitude, a.date, a.image_url,
-      a.difficulty_level, a.organizer_id, a.enrollment_count, a.created_at
+      a.difficulty_level, a.organizer_id, a.house_owner_id, a.status, a.approved_at, a.enrollment_count, a.created_at
      FROM activities a
      ${whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : ''}
      ORDER BY a.date ASC`,
@@ -274,21 +305,22 @@ export async function listActivities(filters?: { category?: ActivityCategory; se
 
 export async function getActivity(activityId: string) {
   const rows = await query<ActivityRow[]>(
-    'SELECT id, title, description, category, location, latitude, longitude, date, image_url, difficulty_level, organizer_id, enrollment_count, created_at FROM activities WHERE id = ? LIMIT 1',
+    'SELECT id, title, description, category, location, latitude, longitude, date, image_url, difficulty_level, organizer_id, house_owner_id, status, approved_at, enrollment_count, created_at FROM activities WHERE id = ? LIMIT 1',
     [activityId]
   );
 
   return rows[0] ? toActivity(rows[0]) : null;
 }
 
-export async function createActivity(input: Omit<Activity, 'id' | 'createdAt' | 'enrollmentCount'>) {
+export async function createActivity(input: Omit<Activity, 'id' | 'createdAt' | 'enrollmentCount' | 'approvedAt'>) {
   const id = `activity_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const status = input.status ?? 'pending';
 
   await execute(
     `INSERT INTO activities (
       id, title, description, category, location, latitude, longitude, date, image_url,
-      difficulty_level, organizer_id, enrollment_count, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      difficulty_level, organizer_id, house_owner_id, status, approved_at, enrollment_count, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
     [
       id,
       input.title,
@@ -301,6 +333,9 @@ export async function createActivity(input: Omit<Activity, 'id' | 'createdAt' | 
       input.imageUrl,
       input.difficultyLevel,
       input.organizerId,
+      input.houseOwnerId,
+      status,
+      status === 'public' ? new Date() : null,
       0,
     ]
   );
@@ -308,20 +343,25 @@ export async function createActivity(input: Omit<Activity, 'id' | 'createdAt' | 
   return getActivity(id);
 }
 
+export async function updateActivityStatus(activityId: string, status: ActivityStatus) {
+  await execute(
+    'UPDATE activities SET status = ?, approved_at = ?, updated_at = NOW() WHERE id = ?',
+    [status, status === 'public' ? new Date() : null, activityId]
+  );
+
+  return getActivity(activityId);
+}
+
 export async function deleteActivity(activityId: string) {
   await execute('DELETE FROM activities WHERE id = ?', [activityId]);
 }
 
-export async function getEnrollmentsByUser(userId: string) {
-  const rows = await query<EnrollmentRow[]>(
-    'SELECT id, user_id, activity_id, enrolled_at FROM activity_enrollments WHERE user_id = ? ORDER BY enrolled_at DESC',
-    [userId]
-  );
-
-  return rows.map(toEnrollment);
-}
-
 export async function toggleEnrollment(userId: string, activityId: string) {
+  const activity = await getActivity(activityId);
+  if (!activity || activity.status !== 'public') {
+    throw new Error('Activity is not available for enrollment yet.');
+  }
+
   const existing = await query<EnrollmentRow[]>(
     'SELECT id, user_id, activity_id, enrolled_at FROM activity_enrollments WHERE user_id = ? AND activity_id = ? LIMIT 1',
     [userId, activityId]
@@ -342,7 +382,7 @@ export async function toggleEnrollment(userId: string, activityId: string) {
 }
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
-  const rows = await query<Array<{ user_id: string; full_name: string; points: number; activity_count: number }>>(
+  const rows = await query<Array<RowDataPacket & { user_id: string; full_name: string; points: number; activity_count: number }>>(
     `SELECT u.id AS user_id, u.full_name, u.points, COUNT(e.id) AS activity_count
      FROM users u
      LEFT JOIN activity_enrollments e ON e.user_id = u.id

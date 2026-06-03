@@ -1,7 +1,8 @@
-export type UserRole = 'user' | 'admin';
+export type UserRole = 'user' | 'admin' | 'house-owner';
 export type AgeGroup = 'teen' | 'young-adult';
 export type ActivityCategory = 'sports' | 'arts' | 'tech' | 'social' | 'outdoor' | 'music' | 'other';
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
+export type ActivityStatus = 'pending' | 'public' | 'rejected';
 
 export interface User {
   id: string;
@@ -32,8 +33,11 @@ export interface Activity {
   imageUrl: string;
   difficultyLevel: DifficultyLevel;
   organizerId: string;
+  houseOwnerId: string;
+  status: ActivityStatus;
   enrollmentCount: number;
   createdAt: Date;
+  approvedAt?: Date | null;
 }
 
 export interface ActivityEnrollment {
@@ -49,25 +53,4 @@ export interface LeaderboardEntry {
   points: number;
   rank: number;
   activities: number;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  createdAt: Date;
 }

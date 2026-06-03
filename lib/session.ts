@@ -20,7 +20,7 @@ export async function verifySession(token: string) {
   const result = await jwtVerify(token, getAuthSecret());
   const role = result.payload.role;
 
-  if (role !== 'user' && role !== 'admin') {
+  if (role !== 'user' && role !== 'admin' && role !== 'house-owner') {
     throw new Error('Invalid session token');
   }
 

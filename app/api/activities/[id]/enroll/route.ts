@@ -11,8 +11,15 @@ async function handleEnrollment(request: NextRequest, activityId: string) {
     return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
   }
 
-  const result = await toggleEnrollment(session.userId, activityId);
-  return NextResponse.json({ success: true, data: result });
+  try {
+    const result = await toggleEnrollment(session.userId, activityId);
+    return NextResponse.json({ success: true, data: result });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : 'Unable to update enrollment.' },
+      { status: 400 }
+    );
+  }
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
