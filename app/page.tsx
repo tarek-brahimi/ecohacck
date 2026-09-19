@@ -204,7 +204,7 @@ export default function LandingPage() {
         viewport={{ once: true, amount: 0.2 }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2026 shabeb.</p>
+          <p>&copy; 2026 shabeb.....</p>
         
 
         </div>
